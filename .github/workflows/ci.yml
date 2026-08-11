@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [develop, main]
+  pull_request:
+    branches: [develop, main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y ninja-build
+      - run: cmake -S . -B build -G Ninja
+      - run: cmake --build build
+
+  no-malloc:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Forbid dynamic allocation
+        run: |
+          if grep -rn -E '\b(malloc|calloc|realloc|free)\b' src/ include/; then
+            echo "ERROR: dynamic allocation is forbidden!"
+            exit 1
+          fi
+
+  no-float:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Forbid floating point
+        run: |
+          if grep -rn -E '\b(float|double)\b' src/ include/; then
+            echo "ERROR: floating point is forbidden; use fixed-point instead!"
+            exit 1
+          fi
+
+  cppcheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y cppcheck
+      - name: Static analysis
+        run: cppcheck --enable=warning,style,performance --error-exitcode=1 src/ include/
