@@ -13,7 +13,7 @@ include_directories(include)
 
 # What to build
 add_executable(slimstack
-    src/*
+    src/main.c
 )
 
 target_link_libraries(slimstack m)
